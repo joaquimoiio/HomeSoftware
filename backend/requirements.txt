@@ -1,0 +1,10 @@
+# Backend — leve e com wheels para ARM (Raspberry Pi 3, Python 3.10+)
+fastapi
+uvicorn[standard]
+sqlalchemy
+pydantic
+pydantic-settings
+python-dotenv
+python-jose[cryptography]   # JWT
+bcrypt                      # hash de senha (lib direta; passlib está sem manutenção)
+python-multipart           # uploads (comparador de seguidores)

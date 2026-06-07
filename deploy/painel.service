@@ -1,0 +1,43 @@
+# Unit systemd do "Painel de Comando" — roda o FastAPI/uvicorn 24h no Raspberry Pi.
+#
+# Como usar (ver README, seção "Deploy no Raspberry Pi"):
+#   1. Ajuste os 3 caminhos/usuário abaixo se você NÃO clonou em
+#      /home/pi/HomeSoftware ou seu usuário não é "pi".
+#   2. sudo cp deploy/painel.service /etc/systemd/system/painel.service
+#   3. sudo systemctl daemon-reload
+#   4. sudo systemctl enable --now painel
+#
+# Edite estes 3 pontos se o seu caso for diferente (User, WorkingDirectory, ExecStart):
+#   - User=pi
+#   - WorkingDirectory=/home/pi/HomeSoftware/backend
+#   - ExecStart=/home/pi/HomeSoftware/backend/.venv/bin/uvicorn ...
+
+[Unit]
+Description=Painel de Comando (FastAPI + frontend)
+# Só sobe depois que a rede estiver pronta (para escutar em 0.0.0.0).
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi
+Group=pi
+
+# A pasta backend/ é o working dir: o pydantic-settings lê o .env daqui e o
+# SQLite (DB_PATH=./painel.db) e os snapshots ficam relativos a esta pasta.
+WorkingDirectory=/home/pi/HomeSoftware/backend
+
+# uvicorn DA VENV (caminho absoluto — systemd não usa o PATH do shell).
+# 1 worker basta no Pi 3. Escuta em todas as interfaces para o acesso remoto.
+ExecStart=/home/pi/HomeSoftware/backend/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+# Se cair (erro, OOM, etc.), reinicia sozinho. Mantém o app 24h de pé.
+Restart=always
+RestartSec=3
+
+# Logs vão para o journal (veja com: journalctl -u painel -f).
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

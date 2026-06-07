@@ -20,16 +20,16 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-User=pi
-Group=pi
+User=joaquim
+Group=joaquim
 
 # A pasta backend/ é o working dir: o pydantic-settings lê o .env daqui e o
 # SQLite (DB_PATH=./painel.db) e os snapshots ficam relativos a esta pasta.
-WorkingDirectory=/home/pi/HomeSoftware/backend
+WorkingDirectory=/home/joaquim/HomeSoftware/backend
 
 # uvicorn DA VENV (caminho absoluto — systemd não usa o PATH do shell).
 # 1 worker basta no Pi 3. Escuta em todas as interfaces para o acesso remoto.
-ExecStart=/home/pi/HomeSoftware/backend/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
+ExecStart=/home/joaquim/HomeSoftware/backend/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
 
 # Se cair (erro, OOM, etc.), reinicia sozinho. Mantém o app 24h de pé.
 Restart=always

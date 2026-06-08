@@ -6,8 +6,14 @@ você instala git, Python e Node no Pi, clona o repositório, builda o frontend 
 deixa rodando 24h. Não precisa copiar nada do PC.
 
 > Cobertura deste guia: do Pi zerado até **acessar o painel pela rede local**
-> (`http://IP_DO_PI:8000`) com o app rodando 24h via systemd. Acesso de fora de casa
-> (Tailscale/Cloudflare) e backup ficam para depois.
+> (`http://IP_DO_PI:8000`) com o app rodando 24h via systemd. Para **acessar de fora de
+> casa** (trabalho, 4G), siga depois um destes:
+> - [ACESSO-REMOTO-TAILSCALE-FUNNEL.md](ACESSO-REMOTO-TAILSCALE-FUNNEL.md) — **grátis e
+>   sem domínio** (recomendado): endereço público `.ts.net`, abre em qualquer navegador.
+> - [ACESSO-REMOTO-CLOUDFLARE.md](ACESSO-REMOTO-CLOUDFLARE.md) — alternativa com domínio
+>   próprio (pago) e tela de login da Cloudflare na frente.
+>
+> Backup fica para depois.
 
 ---
 

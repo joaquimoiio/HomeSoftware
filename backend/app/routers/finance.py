@@ -67,7 +67,6 @@ class LancamentoBase(BaseModel):
     tipo: str = Tipo
     valor: Decimal = Field(gt=0, description="Valor em reais, positivo, até 2 casas")
     descricao: str = Field(min_length=1, max_length=120)
-    categoria: str = Field(min_length=1, max_length=60)
     data: date
 
     @field_validator("valor")
@@ -81,7 +80,7 @@ class LancamentoBase(BaseModel):
             raise ValueError("valor inválido")
         return v
 
-    @field_validator("descricao", "categoria")
+    @field_validator("descricao")
     @classmethod
     def _strip(cls, v: str) -> str:
         v = v.strip()
@@ -103,7 +102,6 @@ class LancamentoRead(BaseModel):
     tipo: str
     valor: float
     descricao: str
-    categoria: str
     data: date
 
     @classmethod
@@ -113,7 +111,6 @@ class LancamentoRead(BaseModel):
             tipo=item.tipo,
             valor=_reais(item.valor_centavos),
             descricao=item.descricao,
-            categoria=item.categoria,
             data=item.data,
         )
 
@@ -129,11 +126,6 @@ class PontoMes(BaseModel):
     entradas: float
     saidas: float
     saldo: float
-
-
-class PontoCategoria(BaseModel):
-    categoria: str
-    total: float
 
 
 # --- helpers -----------------------------------------------------------------
@@ -184,12 +176,9 @@ async def list_lancamentos(
     user: User = Depends(get_current_user),
     inicio: date | None = Query(default=None),
     fim: date | None = Query(default=None),
-    categoria: str | None = Query(default=None),
     tipo: str | None = Query(default=None, pattern="^(entrada|saida)$"),
 ):
     q = _do_usuario(db, user).filter(*_periodo(inicio, fim))
-    if categoria:
-        q = q.filter(Lancamento.categoria == categoria)
     if tipo:
         q = q.filter(Lancamento.tipo == tipo)
     itens = q.order_by(Lancamento.data.desc(), Lancamento.id.desc()).all()
@@ -209,7 +198,6 @@ async def create_lancamento(
         tipo=data.tipo,
         valor_centavos=_para_centavos(data.valor),
         descricao=data.descricao,
-        categoria=data.categoria,
         data=data.data,
     )
     db.add(item)
@@ -238,7 +226,6 @@ async def update_lancamento(
     item.tipo = data.tipo
     item.valor_centavos = _para_centavos(data.valor)
     item.descricao = data.descricao
-    item.categoria = data.categoria
     item.data = data.data
     db.commit()
     db.refresh(item)
@@ -302,29 +289,6 @@ async def resumo_por_mes(
         )
         for m, e, s in rows
     ]
-
-
-@router.get("/resumo/por-categoria", response_model=list[PontoCategoria])
-async def resumo_por_categoria(
-    db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
-    inicio: date | None = Query(default=None),
-    fim: date | None = Query(default=None),
-    tipo: str = Query(default=TIPO_SAIDA, pattern="^(entrada|saida)$"),
-):
-    total = func.sum(Lancamento.valor_centavos)
-    rows = (
-        db.query(Lancamento.categoria, total.label("total"))
-        .filter(
-            Lancamento.user_id == user.id,
-            Lancamento.tipo == tipo,
-            *_periodo(inicio, fim),
-        )
-        .group_by(Lancamento.categoria)
-        .order_by(total.desc())
-        .all()
-    )
-    return [PontoCategoria(categoria=c, total=_reais(t)) for c, t in rows]
 
 
 # =============================================================================

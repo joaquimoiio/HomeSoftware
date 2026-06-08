@@ -48,7 +48,6 @@ class Lancamento(Base):
     # Valor em centavos, sempre positivo; o sinal vem do `tipo`.
     valor_centavos = Column(Integer, nullable=False)
     descricao = Column(String(120), nullable=False)
-    categoria = Column(String(60), nullable=False, index=True)
     data = Column(Date, nullable=False, default=date.today, index=True)
     created_at = Column(
         DateTime, nullable=False, default=lambda: datetime.now(timezone.utc)

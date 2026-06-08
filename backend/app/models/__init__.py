@@ -11,6 +11,7 @@ from .finance import (  # noqa: F401
     Parcela,
 )
 from .user import User  # noqa: F401
+from .worklog import WorkLog  # noqa: F401
 
 __all__ = [
     "User",
@@ -20,4 +21,5 @@ __all__ = [
     "Divida",
     "Parcela",
     "Evento",
+    "WorkLog",
 ]

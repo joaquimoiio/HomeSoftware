@@ -58,6 +58,7 @@ import {
 } from "../lib/datetime";
 import { Shell } from "../components/Shell";
 import { PageHeader } from "../components/PageHeader";
+import { AgendaTabs } from "../components/AgendaTabs";
 import { Field } from "../components/Field";
 import { Button } from "../components/Button";
 
@@ -965,6 +966,10 @@ export default function Agenda() {
             </span>
           }
         />
+
+        <div className="mt-6">
+          <AgendaTabs />
+        </div>
 
         {/* barra de controle: navegação + título + visão + novo */}
         <div className="mt-6 flex flex-wrap items-center justify-between gap-4">

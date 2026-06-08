@@ -15,6 +15,7 @@ import Financeiro from "./pages/Financeiro";
 import Patrimonio from "./pages/Patrimonio";
 import Dividas from "./pages/Dividas";
 import Agenda from "./pages/Agenda";
+import WorkLog from "./pages/WorkLog";
 import Seguidores from "./pages/Seguidores";
 
 function Loader() {
@@ -96,6 +97,14 @@ export default function App() {
         element={
           <ProtectedRoute>
             <Agenda />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/agenda/worklog"
+        element={
+          <ProtectedRoute>
+            <WorkLog />
           </ProtectedRoute>
         }
       />

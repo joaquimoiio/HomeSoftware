@@ -15,7 +15,7 @@ from fastapi.staticfiles import StaticFiles
 from . import models  # noqa: F401  — registra os models na Base p/ create_all
 from .core.db import Base, SessionLocal, engine
 from .core.security import bootstrap_admin
-from .routers import admin, auth, calendar, finance, followers
+from .routers import admin, auth, calendar, finance, followers, worklog
 
 
 @asynccontextmanager
@@ -39,6 +39,7 @@ app.include_router(auth.router)  # -> /api/auth
 app.include_router(admin.router)  # -> /api/admin (só admin)
 app.include_router(finance.router)  # -> /api/finance
 app.include_router(calendar.router)  # -> /api/calendar
+app.include_router(worklog.router)  # -> /api/worklog (registro de horas da agenda)
 app.include_router(followers.router)  # -> /api/followers (sem banco; snapshots em disco)
 
 

@@ -140,7 +140,6 @@ export type Lancamento = {
   tipo: TipoLancamento;
   valor: number; // reais
   descricao: string;
-  categoria: string;
   data: string; // YYYY-MM-DD
 };
 
@@ -148,7 +147,6 @@ export type LancamentoInput = {
   tipo: TipoLancamento;
   valor: number;
   descricao: string;
-  categoria: string;
   data: string;
 };
 
@@ -159,7 +157,6 @@ export type PontoMes = {
   saidas: number;
   saldo: number;
 };
-export type PontoCategoria = { categoria: string; total: number };
 
 export type Periodo = { inicio?: string; fim?: string };
 
@@ -171,7 +168,7 @@ function qs(params: Record<string, string | undefined>): string {
 }
 
 export function listLancamentos(
-  filtro: Periodo & { categoria?: string; tipo?: TipoLancamento } = {}
+  filtro: Periodo & { tipo?: TipoLancamento } = {}
 ): Promise<Lancamento[]> {
   return api<Lancamento[]>(`/finance/lancamentos${qs(filtro)}`);
 }
@@ -203,12 +200,6 @@ export function getResumo(periodo: Periodo = {}): Promise<Resumo> {
 
 export function getResumoPorMes(periodo: Periodo = {}): Promise<PontoMes[]> {
   return api<PontoMes[]>(`/finance/resumo/por-mes${qs(periodo)}`);
-}
-
-export function getResumoPorCategoria(
-  periodo: Periodo & { tipo?: TipoLancamento } = {}
-): Promise<PontoCategoria[]> {
-  return api<PontoCategoria[]>(`/finance/resumo/por-categoria${qs(periodo)}`);
 }
 
 // --- financeiro: patrimônio --------------------------------------------------
@@ -428,6 +419,56 @@ export function updateEvento(id: number, data: EventoInput): Promise<Evento> {
 
 export function deleteEvento(id: number): Promise<void> {
   return api<void>(`/calendar/eventos/${id}`, { method: "DELETE" });
+}
+
+// --- agenda: work log (registro de horas) -----------------------------------
+export type WorkLog = {
+  id: number;
+  atividade: string; // número/identificador, texto livre (ex.: OS-1234)
+  descricao: string | null;
+  inicio: string; // "YYYY-MM-DDTHH:MM:SS" (naive local)
+  duracao_min: number; // duração em minutos
+};
+
+export type WorkLogInput = {
+  atividade: string;
+  descricao?: string | null;
+  inicio: string;
+  duracao_min: number;
+};
+
+export type TotalAtividade = { atividade: string; total_min: number };
+
+export type ResumoWorkLog = {
+  total_min: number;
+  registros: number;
+  por_atividade: TotalAtividade[];
+};
+
+export function listWorkLogs(periodo: Periodo = {}): Promise<WorkLog[]> {
+  return api<WorkLog[]>(`/worklog/registros${qs(periodo)}`);
+}
+
+export function createWorkLog(data: WorkLogInput): Promise<WorkLog> {
+  return api<WorkLog>("/worklog/registros", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export function updateWorkLog(id: number, data: WorkLogInput): Promise<WorkLog> {
+  return api<WorkLog>(`/worklog/registros/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+export function deleteWorkLog(id: number): Promise<void> {
+  return api<void>(`/worklog/registros/${id}`, { method: "DELETE" });
+}
+
+export function getResumoWorkLog(periodo: Periodo = {}): Promise<ResumoWorkLog> {
+  return api<ResumoWorkLog>(`/worklog/resumo${qs(periodo)}`);
 }
 
 // --- comparador de seguidores (sem banco; snapshots em disco) ----------------

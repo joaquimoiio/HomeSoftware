@@ -1,7 +1,7 @@
 /**
  * Financeiro — aba Fluxo de caixa (sprint 05).
- * Registra entradas/saídas (CRUD), mostra saldo/totais do período e duas visões
- * sóbrias: por categoria e por mês. Segue o design system: valores em mono,
+ * Registra entradas/saídas (CRUD), mostra saldo/totais do período e uma visão
+ * sóbria por mês. Segue o design system: valores em mono,
  * sinais em --pos/--neg, sotaque âmbar só em ação/foco; gráficos sem exagero.
  * Patrimônio e dívidas (mesmas rotas) chegam nas sprints 06 e 07.
  */
@@ -28,13 +28,11 @@ import {
   createLancamento,
   deleteLancamento,
   getResumo,
-  getResumoPorCategoria,
   getResumoPorMes,
   listLancamentos,
   updateLancamento,
   type Lancamento,
   type LancamentoInput,
-  type PontoCategoria,
   type PontoMes,
   type Resumo,
   type TipoLancamento,
@@ -98,7 +96,6 @@ function LancamentoForm({
   const [tipo, setTipo] = useState<TipoLancamento>("saida");
   const [valor, setValor] = useState("");
   const [descricao, setDescricao] = useState("");
-  const [categoria, setCategoria] = useState("");
   const [data, setData] = useState(isoToday());
 
   // Sincroniza o form quando entra/sai do modo edição.
@@ -107,13 +104,11 @@ function LancamentoForm({
       setTipo(editing.tipo);
       setValor(String(editing.valor).replace(".", ","));
       setDescricao(editing.descricao);
-      setCategoria(editing.categoria);
       setData(editing.data);
     } else {
       setTipo("saida");
       setValor("");
       setDescricao("");
-      setCategoria("");
       setData(isoToday());
     }
   }, [editing]);
@@ -122,7 +117,7 @@ function LancamentoForm({
     e.preventDefault();
     const valorNum = Number(valor.replace(/\./g, "").replace(",", "."));
     if (!Number.isFinite(valorNum) || valorNum <= 0) return;
-    onSubmit({ tipo, valor: valorNum, descricao, categoria, data });
+    onSubmit({ tipo, valor: valorNum, descricao, data });
   }
 
   return (
@@ -184,31 +179,20 @@ function LancamentoForm({
         required
       />
 
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-        <Field
-          id="lanc-categoria"
-          label="categoria"
-          value={categoria}
-          onChange={(e) => setCategoria(e.target.value)}
-          placeholder="ex.: alimentação"
-          maxLength={60}
+      <label className="block">
+        <span className="font-mono text-[11px] uppercase tracking-widest text-text-faint">
+          data
+        </span>
+        <input
+          type="date"
+          value={data}
+          onChange={(e) => setData(e.target.value)}
           required
+          className="mt-2 w-full bg-transparent border-b border-line py-2
+                     font-mono tabular-nums text-text outline-none
+                     transition-colors focus:border-accent [color-scheme:dark]"
         />
-        <label className="block">
-          <span className="font-mono text-[11px] uppercase tracking-widest text-text-faint">
-            data
-          </span>
-          <input
-            type="date"
-            value={data}
-            onChange={(e) => setData(e.target.value)}
-            required
-            className="mt-2 w-full bg-transparent border-b border-line py-2
-                       font-mono tabular-nums text-text outline-none
-                       transition-colors focus:border-accent [color-scheme:dark]"
-          />
-        </label>
-      </div>
+      </label>
 
       <div className="flex items-center gap-2 pt-1">
         <Button type="submit" disabled={busy}>
@@ -227,30 +211,6 @@ function LancamentoForm({
 }
 
 // --- gráficos (sóbrios, sem lib) ---------------------------------------------
-function GraficoPorCategoria({ dados }: { dados: PontoCategoria[] }) {
-  const max = Math.max(1, ...dados.map((d) => d.total));
-  if (dados.length === 0)
-    return <p className="text-sm text-text-faint">Sem saídas no período.</p>;
-  return (
-    <ul className="space-y-3">
-      {dados.map((d) => (
-        <li key={d.categoria}>
-          <div className="flex items-baseline justify-between gap-3">
-            <span className="truncate text-sm text-text-dim">{d.categoria}</span>
-            <Value className="shrink-0 text-sm">{money(d.total)}</Value>
-          </div>
-          <div className="mt-1.5 h-1.5 w-full bg-bg-700">
-            <div
-              className="h-full bg-accent/70"
-              style={{ width: `${(d.total / max) * 100}%` }}
-            />
-          </div>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
 function GraficoPorMes({ dados }: { dados: PontoMes[] }) {
   const max = Math.max(
     1,
@@ -333,7 +293,6 @@ export default function Financeiro() {
     saldo: 0,
   });
   const [porMes, setPorMes] = useState<PontoMes[]>([]);
-  const [porCategoria, setPorCategoria] = useState<PontoCategoria[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<Lancamento | null>(null);
@@ -346,16 +305,14 @@ export default function Financeiro() {
 
   const refresh = useCallback(async () => {
     try {
-      const [ls, r, pm, pc] = await Promise.all([
+      const [ls, r, pm] = await Promise.all([
         listLancamentos(filtro),
         getResumo(filtro),
         getResumoPorMes(filtro),
-        getResumoPorCategoria({ ...filtro, tipo: "saida" }),
       ]);
       setLancamentos(ls);
       setResumo(r);
       setPorMes(pm);
-      setPorCategoria(pc);
       setError(null);
     } catch (e) {
       if (e instanceof ApiError && e.status === 401) return; // api.ts redireciona
@@ -540,8 +497,6 @@ export default function Financeiro() {
                         <div className="min-w-0">
                           <p className="truncate text-text">{l.descricao}</p>
                           <p className="mt-0.5 flex items-center gap-2 text-xs text-text-faint">
-                            <span className="truncate">{l.categoria}</span>
-                            <span className="text-line-strong">·</span>
                             <Value tone="dim" className="text-xs">
                               {rotuloData(l.data)}
                             </Value>
@@ -585,16 +540,10 @@ export default function Financeiro() {
             </ul>
           </div>
 
-          {/* direita — visões */}
-          <aside className="space-y-8 lg:col-span-2">
-            <section>
-              <h2 className="mb-4 font-mono text-[11px] uppercase tracking-widest text-text-dim">
-                saídas por categoria
-              </h2>
-              <GraficoPorCategoria dados={porCategoria} />
-            </section>
-            <section>
-              <h2 className="mb-4 font-mono text-[11px] uppercase tracking-widest text-text-dim">
+          {/* direita — visão por mês */}
+          <aside className="lg:col-span-2">
+            <section className="border border-line bg-bg-800/40 p-5 md:p-6 lg:sticky lg:top-10">
+              <h2 className="mb-5 font-mono text-[11px] uppercase tracking-widest text-text-dim">
                 por mês
               </h2>
               <GraficoPorMes dados={porMes} />
